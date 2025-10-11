@@ -29,6 +29,7 @@ struct FrequencyBarsView: View {
                         width: 8,
                         height: calculateBarHeight(index: index)
                     )
+                    .animation(.linear(duration: 0.016), value: audioRecorder.audioLevel)
             }
         }
     }

@@ -33,6 +33,7 @@ struct CircularPulseView: View {
                     width: 40 + CGFloat(index) * 50 + audioRecorder.audioLevel * 180,
                     height: 40 + CGFloat(index) * 50 + audioRecorder.audioLevel * 180
                 )
+                .animation(.linear(duration: 0.016), value: audioRecorder.audioLevel)
             }
         }
     }
