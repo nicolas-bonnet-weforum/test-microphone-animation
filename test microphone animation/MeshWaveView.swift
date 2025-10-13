@@ -71,20 +71,25 @@ struct WaveLineShape: Shape {
             let wave1 = sin((relativeX * 2.0 * 2 * .pi) + phase)
             let wave2 = sin((relativeX * 3.5 * 2 * .pi) + phase * 1.3)
             let wave3 = sin((relativeX * 1.2 * 2 * .pi) + phase * 0.7)
+            let wave4 = sin((relativeX * 5.7 * 2 * .pi) + phase * 1.8) // Additional high-frequency noise
+            let wave5 = sin((relativeX * 7.3 * 2 * .pi) + phase * 2.1) // More high-frequency detail
             
-            // Combine waves for organic effect
-            let combinedWave = (wave1 * 0.5 + wave2 * 0.3 + wave3 * 0.2)
+            // Combine waves with more balanced weights and reduced base noise
+            let baseNoise = 0.08 // Reduced always present noise
+            let combinedWave = (wave1 * 0.4 + wave2 * 0.3 + wave3 * 0.2 + wave4 * 0.08 + wave5 * 0.05) + baseNoise
             
-            // Top base wave
-            let topY = midHeight - height * 0.08 + (combinedWave * amplitude * 100)
+            // Top base wave with increased amplitude impact
+            let topY = midHeight - height * 0.08 + (combinedWave * (amplitude * 200 + 10))
             
             // Bottom base wave with different phase
             let bottomWave1 = sin((relativeX * 2.2 * 2 * .pi) + phase + 0.5)
             let bottomWave2 = sin((relativeX * 3.0 * 2 * .pi) + phase * 1.5)
             let bottomWave3 = sin((relativeX * 1.5 * 2 * .pi) + phase * 0.9)
-            let combinedBottomWave = (bottomWave1 * 0.5 + bottomWave2 * 0.3 + bottomWave3 * 0.2)
+            let bottomWave4 = sin((relativeX * 6.1 * 2 * .pi) + phase * 2.3) // Additional noise
+            let bottomWave5 = sin((relativeX * 8.2 * 2 * .pi) + phase * 1.7) // More detail
+            let combinedBottomWave = (bottomWave1 * 0.4 + bottomWave2 * 0.3 + bottomWave3 * 0.2 + bottomWave4 * 0.08 + bottomWave5 * 0.05) + baseNoise
             
-            let bottomY = midHeight + height * 0.08 + (combinedBottomWave * amplitude * 100)
+            let bottomY = midHeight + height * 0.08 + (combinedBottomWave * (amplitude * 200 + 10))
             
             // Interpolate between top and bottom
             let y = topY + (bottomY - topY) * t

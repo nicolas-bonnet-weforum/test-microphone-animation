@@ -98,10 +98,10 @@ class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         guard let recorder = audioRecorder else { return }
         recorder.updateMeters()
         
-        // Ignore audio spikes during the first 1.0 seconds of recording (microphone warmup)
+        // Ignore audio spikes during the first 0.3 seconds of recording (reduced warmup)
         if let startTime = recordingStartTime {
             let elapsed = Date().timeIntervalSince(startTime)
-            if elapsed < 1.0 {
+            if elapsed < 0.3 {
                 return
             }
         }
@@ -109,22 +109,23 @@ class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         // Get average power for channel 0 (ranges from -160 to 0)
         let averagePower = recorder.averagePower(forChannel: 0)
         
-        // Map to a reasonable range: silence (-160 to -40 dB) -> 0.12, loud sound (-40 to 0 dB) -> 1.0
+        // More sensitive mapping: start reacting at -55 dB instead of -40 dB
+        // Map -55 to 0 dB -> 0.12 to 1.0 for better sensitivity
         let newLevel: CGFloat
-        if averagePower < -40 {
-            // Silence or very quiet - keep at idle level
+        if averagePower < -55 {
+            // Very quiet - keep at idle level
             newLevel = 0.12
         } else {
-            // Real sound detected - map -40dB to 0dB -> 0.12 to 1.0
-            let soundRange = (averagePower + 40) / 40
+            // Sound detected - map -55dB to 0dB -> 0.12 to 1.0
+            let soundRange = (averagePower + 55) / 55
             newLevel = CGFloat(0.12 + (soundRange * 0.88))
         }
         
-        // Threshold for detecting actual speech (not just background noise)
-        let speechThreshold: CGFloat = 0.18
+        // Lower threshold for detecting sound (more sensitive)
+        let soundThreshold: CGFloat = 0.15
         
-        if newLevel > speechThreshold {
-            // Speech detected! Update audio level
+        if newLevel > soundThreshold {
+            // Sound detected! Update audio level
             withAnimation(.easeOut(duration: 0.08)) {
                 audioLevel = newLevel
             }

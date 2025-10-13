@@ -38,8 +38,6 @@ struct ContentView: View {
                 }
                 .padding(.top, 20)
                 
-                Spacer()
-                
                 // Animated waves
                 Group {
                     switch selectedStyle {
@@ -51,10 +49,7 @@ struct ContentView: View {
                         FrequencyBarsView(audioRecorder: audioRecorder)
                     }
                 }
-                .frame(height: 400)
-                .padding(.horizontal, 40)
-                
-                Spacer()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Recording button
                 Button(action: {
