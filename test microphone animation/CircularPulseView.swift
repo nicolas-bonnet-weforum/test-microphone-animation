@@ -10,7 +10,6 @@ import SwiftUI
 struct CircularPulseView: View {
     @ObservedObject var audioRecorder: AudioRecorder
     @State private var continuousTime: Double = 0
-    @State private var smoothedAudioLevel: CGFloat = 0
     @State private var timer: Timer?
     
     var body: some View {
@@ -19,7 +18,7 @@ struct CircularPulseView: View {
                 OrganicCircleShape(
                     phase: audioRecorder.phase * 0.2 + Double(index) * 0.3,
                     index: index,
-                    audioLevel: smoothedAudioLevel,
+                    audioLevel: audioRecorder.audioLevel,
                     continuousTime: continuousTime
                 )
                 .stroke(
@@ -42,7 +41,6 @@ struct CircularPulseView: View {
         }
         .onAppear {
             startContinuousTimer()
-            smoothedAudioLevel = audioRecorder.audioLevel
         }
         .onDisappear {
             timer?.invalidate()
@@ -52,21 +50,6 @@ struct CircularPulseView: View {
     private func startContinuousTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
             continuousTime += 0.016
-            
-            // Separate smoothing factors for different states
-            let targetAudio = audioRecorder.isRecording ? audioRecorder.audioLevel : 0
-            
-            // Use different smoothing based on whether audio is increasing or decreasing
-            let smoothingFactor: CGFloat
-            if targetAudio > smoothedAudioLevel {
-                // Punchy response when audio increases
-                smoothingFactor = 0.4
-            } else {
-                // Slower decay when audio decreases or stops recording
-                smoothingFactor = 0.15
-            }
-            
-            smoothedAudioLevel += (targetAudio - smoothedAudioLevel) * smoothingFactor
         }
     }
 }
