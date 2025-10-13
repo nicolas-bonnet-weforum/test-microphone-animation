@@ -79,7 +79,7 @@ struct WaveLineShape: Shape {
             let combinedWave = (wave1 * 0.4 + wave2 * 0.3 + wave3 * 0.2 + wave4 * 0.08 + wave5 * 0.05) + baseNoise
             
             // Top base wave with increased amplitude impact
-            let topY = midHeight - height * 0.08 + (combinedWave * (amplitude * 200 + 10))
+            let topY = midHeight - height * 0.04 + (combinedWave * (amplitude * 200 + 10))
             
             // Bottom base wave with different phase
             let bottomWave1 = sin((relativeX * 2.2 * 2 * .pi) + phase + 0.5)
@@ -89,7 +89,7 @@ struct WaveLineShape: Shape {
             let bottomWave5 = sin((relativeX * 8.2 * 2 * .pi) + phase * 1.7) // More detail
             let combinedBottomWave = (bottomWave1 * 0.4 + bottomWave2 * 0.3 + bottomWave3 * 0.2 + bottomWave4 * 0.08 + bottomWave5 * 0.05) + baseNoise
             
-            let bottomY = midHeight + height * 0.08 + (combinedBottomWave * (amplitude * 200 + 10))
+            let bottomY = midHeight + height * 0.04 + (combinedBottomWave * (amplitude * 200 + 10))
             
             // Interpolate between top and bottom
             let y = topY + (bottomY - topY) * t

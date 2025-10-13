@@ -10,6 +10,7 @@ import SwiftUI
 struct CircularPulseView: View {
     @ObservedObject var audioRecorder: AudioRecorder
     @State private var continuousTime: Double = 0
+    @State private var smoothedAudioLevel: CGFloat = 0
     @State private var timer: Timer?
     
     var body: some View {
@@ -18,7 +19,7 @@ struct CircularPulseView: View {
                 OrganicCircleShape(
                     phase: audioRecorder.phase * 0.2 + Double(index) * 0.3,
                     index: index,
-                    audioLevel: audioRecorder.audioLevel,
+                    audioLevel: smoothedAudioLevel,
                     continuousTime: continuousTime
                 )
                 .stroke(
@@ -34,14 +35,14 @@ struct CircularPulseView: View {
                     lineWidth: 1.5
                 )
                 .frame(
-                    width: 120 + CGFloat(index) * 2 + audioRecorder.audioLevel * 100,
-                    height: 120 + CGFloat(index) * 2 + audioRecorder.audioLevel * 100
+                    width: 150 + CGFloat(index) * 0.5,
+                    height: 150 + CGFloat(index) * 0.5
                 )
-                .animation(.linear(duration: 0.016), value: audioRecorder.audioLevel)
             }
         }
         .onAppear {
             startContinuousTimer()
+            smoothedAudioLevel = audioRecorder.audioLevel
         }
         .onDisappear {
             timer?.invalidate()
@@ -51,6 +52,21 @@ struct CircularPulseView: View {
     private func startContinuousTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { _ in
             continuousTime += 0.016
+            
+            // Separate smoothing factors for different states
+            let targetAudio = audioRecorder.isRecording ? audioRecorder.audioLevel : 0
+            
+            // Use different smoothing based on whether audio is increasing or decreasing
+            let smoothingFactor: CGFloat
+            if targetAudio > smoothedAudioLevel {
+                // Punchy response when audio increases
+                smoothingFactor = 0.4
+            } else {
+                // Slower decay when audio decreases or stops recording
+                smoothingFactor = 0.15
+            }
+            
+            smoothedAudioLevel += (targetAudio - smoothedAudioLevel) * smoothingFactor
         }
     }
 }
@@ -75,6 +91,15 @@ struct OrganicCircleShape: Shape {
         // Continuously evolving parameters based on time
         let timeScale = continuousTime * 0.1  // Slow evolution
         
+        // Scale compactness based on circle index (first and last circles are more stable)
+        let totalCircles = 15.0
+        let normalizedIndex = Double(index) / (totalCircles - 1.0) // 0.0 to 1.0
+        // Create a curve that's low at edges (0 and 1) and high in the middle
+        let indexWeight = sin(normalizedIndex * .pi) // Peaks at 0.5, low at 0 and 1
+        
+        // Audio level increases the randomness and chaos
+        let audioRandomnessMultiplier = 1.0 + Double(audioLevel) * 1.5
+        
         // Use fixed integer frequencies to ensure circles close properly
         // Only vary the phase offsets and amplitudes for smooth continuous evolution
         let freq1 = 2.0
@@ -82,32 +107,43 @@ struct OrganicCircleShape: Shape {
         let freq3 = 6.0
         let freq4 = 3.0
         
-        // Smoothly varying phase offsets - this creates the evolving chaos
+        // Smoothly varying phase offsets - constant rotation independent of audio
+        // Audio level NO LONGER affects phase offsets to maintain constant rotation
         let phaseOffset1 = sin(timeScale * 0.5) * 2.0
         let phaseOffset2 = sin(timeScale * 0.6) * 2.5
         let phaseOffset3 = sin(timeScale * 0.4) * 1.8
         let phaseOffset4 = sin(timeScale * 0.55) * 2.2
         
-        // Smoothly varying amplitude scales
-        let ampScale1 = 1.0 + sin(timeScale * 0.65) * 0.3
-        let ampScale2 = 1.0 + sin(timeScale * 0.75) * 0.35
-        let ampScale3 = 1.0 + sin(timeScale * 0.85) * 0.25
-        let ampScale4 = 1.0 + sin(timeScale * 0.7) * 0.4
+        // Smoothly varying amplitude scales - constant evolution independent of audio
+        let ampScale1 = 1.0 + sin(timeScale * 0.65) * 0.15
+        let ampScale2 = 1.0 + sin(timeScale * 0.75) * 0.18
+        let ampScale3 = 1.0 + sin(timeScale * 0.85) * 0.12
+        let ampScale4 = 1.0 + sin(timeScale * 0.7) * 0.2
+        
+        // Base wave amplitudes - reduce for first and last circles before any multiplications
+        // This ensures compactness is maintained regardless of randomness level
+        let baseAmp1 = 0.12 * (0.3 + indexWeight * 0.7) // Range: 0.036 to 0.12
+        let baseAmp2 = 0.08 * (0.3 + indexWeight * 0.7) // Range: 0.024 to 0.08
+        let baseAmp3 = 0.05 * (0.3 + indexWeight * 0.7) // Range: 0.015 to 0.05
+        let baseAmp4 = 0.06 * (0.3 + indexWeight * 0.7) // Range: 0.018 to 0.06
         
         let points = 120
         for i in 0...points {
             let angle = (Double(i) / Double(points)) * 2 * .pi
             
             // Create flowing wave patterns with continuous time-based variation
-            let wave1 = sin(angle * freq1 + phase + phaseOffset1) * 0.12 * ampScale1
-            let wave2 = sin(angle * freq2 + phase * 1.5 + phaseOffset2) * 0.08 * ampScale2
-            let wave3 = sin(angle * freq3 - phase * 0.8 + phaseOffset3) * 0.05 * ampScale3
-            let wave4 = cos(angle * freq4 + phase * 1.2 + phaseOffset4) * 0.06 * ampScale4
+            let wave1 = sin(angle * freq1 + phase + phaseOffset1) * baseAmp1 * ampScale1
+            let wave2 = sin(angle * freq2 + phase * 1.5 + phaseOffset2) * baseAmp2 * ampScale2
+            let wave3 = sin(angle * freq3 - phase * 0.8 + phaseOffset3) * baseAmp3 * ampScale3
+            let wave4 = cos(angle * freq4 + phase * 1.2 + phaseOffset4) * baseAmp4 * ampScale4
             
-            // Add audio reactivity
-            let audioVariation = audioLevel * 0.15
+            let waveSum = wave1 + wave2 + wave3 + wave4
             
-            let variation = 1 + wave1 + wave2 + wave3 + wave4 + audioVariation
+            // Audio amplifier compresses the variations: pulls lows down strongly, impacts highs less
+            let audioCompressionFactor = 1.0 + Double(audioLevel) * 4.0
+            let compressedWave = waveSum * (waveSum > 0 ? 1.0 : audioCompressionFactor)
+            
+            let variation = 1 + compressedWave
             let radius = baseRadius * variation
             
             let x = center.x + cos(angle) * radius
