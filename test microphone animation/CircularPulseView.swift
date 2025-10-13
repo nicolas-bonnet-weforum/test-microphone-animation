@@ -12,26 +12,27 @@ struct CircularPulseView: View {
     
     var body: some View {
         ZStack {
-            ForEach(0..<8) { index in
+            ForEach(0..<15) { index in
                 OrganicCircleShape(
-                    phase: audioRecorder.phase + Double(index) * 0.5,
-                    index: index
+                    phase: audioRecorder.phase * 0.4 + Double(index) * 0.3,
+                    index: index,
+                    audioLevel: audioRecorder.audioLevel
                 )
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.7, green: 0.9, blue: 0.2).opacity(0.7 - Double(index) * 0.08),
-                            Color(red: 0.2, green: 0.8, blue: 0.2).opacity(0.7 - Double(index) * 0.08),
-                            Color(red: 0.2, green: 0.8, blue: 0.6).opacity(0.7 - Double(index) * 0.08)
+                            Color(red: 0.7, green: 0.9, blue: 0.2).opacity(0.8),
+                            Color(red: 0.2, green: 0.8, blue: 0.2).opacity(0.8),
+                            Color(red: 0.2, green: 0.8, blue: 0.6).opacity(0.8)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 2
+                    lineWidth: 1.5
                 )
                 .frame(
-                    width: 40 + CGFloat(index) * 50 + audioRecorder.audioLevel * 180,
-                    height: 40 + CGFloat(index) * 50 + audioRecorder.audioLevel * 180
+                    width: 120 + CGFloat(index) * 4 + audioRecorder.audioLevel * 100,
+                    height: 120 + CGFloat(index) * 4 + audioRecorder.audioLevel * 100
                 )
                 .animation(.linear(duration: 0.016), value: audioRecorder.audioLevel)
             }
@@ -43,6 +44,7 @@ struct CircularPulseView: View {
 struct OrganicCircleShape: Shape {
     var phase: Double
     var index: Int
+    var audioLevel: CGFloat
     
     var animatableData: Double {
         get { phase }
@@ -54,16 +56,20 @@ struct OrganicCircleShape: Shape {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let baseRadius = min(rect.width, rect.height) / 2
         
-        let points = 60
+        let points = 120
         for i in 0...points {
             let angle = (Double(i) / Double(points)) * 2 * .pi
             
-            // Add organic variation to radius
-            let wave1 = sin(angle * 3 + phase) * 0.05
-            let wave2 = sin(angle * 5 + phase * 1.3) * 0.03
-            let wave3 = sin(angle * 7 + phase * 0.7) * 0.02
+            // Create flowing wave patterns similar to the image
+            let wave1 = sin(angle * 2 + phase) * 0.12
+            let wave2 = sin(angle * 4 + phase * 1.5) * 0.08
+            let wave3 = sin(angle * 6 - phase * 0.8) * 0.05
+            let wave4 = cos(angle * 3 + phase * 1.2) * 0.06
             
-            let variation = 1 + wave1 + wave2 + wave3
+            // Add audio reactivity
+            let audioVariation = audioLevel * 0.15
+            
+            let variation = 1 + wave1 + wave2 + wave3 + wave4 + audioVariation
             let radius = baseRadius * variation
             
             let x = center.x + cos(angle) * radius
