@@ -122,11 +122,19 @@ struct OrganicCircleShape: Shape {
             
             let waveSum = wave1 + wave2 + wave3 + wave4
             
-            // Audio amplifier compresses the variations: pulls lows down strongly, impacts highs less
-            let audioCompressionFactor = 1.0 + Double(audioLevel) * 4.0
-            let compressedWave = waveSum * (waveSum > 0 ? 1.0 : audioCompressionFactor)
+            // Audio amplifier with asymmetric compression:
+            // - Lows (negative values) get more amplification for dramatic inward movement
+            // - Peaks (positive values) get moderate amplification so they're visible but compressed
+            let lowAmplifier = 1.0 + Double(audioLevel) * 8  // Increased for more sensitivity
+            let peakAmplifier = 1.0 + Double(audioLevel) * 3  // Increased for more visible peaks
+            let amplifiedWave = waveSum * (waveSum > 0 ? peakAmplifier : lowAmplifier)
             
-            let variation = 1 + compressedWave
+            // Apply smooth compression to prevent flipping over center while maintaining wave shape
+            // Use tanh (hyperbolic tangent) for smooth soft-clipping that preserves wave character
+            // Reduced scale factor for less aggressive compression, allowing more movement
+            let compressedWave = tanh(amplifiedWave * 0.5) / 0.5
+            
+            let variation = 1 + compressedWave * 0.7  // Increased from 0.5 to 0.7 for more visible effect
             let radius = baseRadius * variation
             
             let x = center.x + cos(angle) * radius

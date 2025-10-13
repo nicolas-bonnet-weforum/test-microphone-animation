@@ -87,8 +87,8 @@ class AudioRecorder: NSObject, ObservableObject {
             } else {
                 // Smooth interpolation to target level (ease-out effect)
                 let diff = self.targetAudioLevel - self.audioLevel
-                // Interpolate: move 40% of the distance each frame at 60fps (~0.08s to reach 95%)
-                self.audioLevel += diff * 0.4
+                // Interpolate: move 60% of the distance each frame at 60fps (faster response)
+                self.audioLevel += diff * 0.6
             }
         }
     }
