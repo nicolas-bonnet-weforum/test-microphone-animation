@@ -22,9 +22,8 @@ struct MeshWaveView: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.7, green: 0.9, blue: 0.2).opacity(0.8),
-                            Color(red: 0.2, green: 0.8, blue: 0.2).opacity(0.8),
-                            Color(red: 0.2, green: 0.8, blue: 0.6).opacity(0.8)
+                            Color(red: 0.18, green: 0.41, blue: 1.00).opacity(0.8),
+                            Color(red: 0.93, green: 0.42, blue: 1.00).opacity(0.8)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
